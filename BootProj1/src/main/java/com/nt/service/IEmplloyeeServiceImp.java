@@ -1,13 +1,21 @@
-	package com.nt.service;
+package com.nt.service;
 	
-	import java.util.List;
-	import java.util.Optional;
-	
-	import org.springframework.beans.factory.annotation.Autowired;
-	import org.springframework.stereotype.Service;
-	
-	import com.nt.entity.Employee;
-	import com.nt.repository.IEmployeeCurdRepository;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+
+import com.nt.entity.Employee;
+import com.nt.exception.EmployeeNotFoundException;
+import com.nt.repository.IEmployeeCurdRepository;
+
 	
 	@Service
 	public class IEmplloyeeServiceImp implements IEmployeeService {
@@ -28,29 +36,24 @@
 	
 	
 		@Override
-		public List<Employee> findAllEmpData(List<Integer> ids)
-		{
-	
-	       List<Employee> list=empRepo.findAllById(ids);
-			//	list.forEach(System.out::println);
-			return list;
+		public List<Employee> findAllEmpData(List<Integer> ids) {
+		    List<Employee> list = empRepo.findAllById(ids);
+		    if (list.isEmpty()) {
+		        throw new EmployeeNotFoundException("No employees found for IDs: " + ids);
+		    }
+		    return list;
 		}
-	
-	
-	
-	
+
 		@Override
 		public String deleteElementByIdinBatch(List<Integer> ids) {
-	
-			List<Employee> list=empRepo.findAllById(ids);
-			if(list.size()!=0)
-			{
-				empRepo.deleteAllByIdInBatch(ids);
-				return list.size()+"no of records are";
-			}
-			
-			return "no records are found  for deletion";
+		    List<Employee> list = empRepo.findAllById(ids);
+		    if (list.isEmpty()) {
+		        throw new EmployeeNotFoundException("No records found for deletion with IDs: " + ids);
+		    }
+		    empRepo.deleteAllByIdInBatch(ids);
+		    return list.size() + " record(s) deleted successfully";
 		}
+
 	
 	
 		@Override
@@ -69,4 +72,92 @@
 			}
 			
 		}
+
+
+		@Override
+		public List<Employee> showEmployeeByData(Employee data, boolean asOrder, String ...prop) {
+
+		    ExampleMatcher matcher = ExampleMatcher.matchingAll()
+		            .withIgnoreCase() // ignore case
+		            .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING) // allow partial matches
+		            .withIgnoreNullValues(); // ignore nulls
+
+		    Example<Employee> example = Example.of(data,matcher);
+
+		    Sort sort = Sort.by(asOrder ? Sort.Direction.ASC : Sort.Direction.DESC, prop);
+
+		    List<Employee> list=empRepo.findAll(example, sort);
+		    
+		    return list;
+		}
+
+
+		@Override
+		public void showEmployeeBypagination(int pageSize) {
+
+		    long count = empRepo.count(); // total employees in table
+		    long pageCount = count / pageSize;
+
+		    if (count % pageSize != 0)
+		        pageCount++;
+
+		    System.out.println("Total Employees: " + count);
+		    System.out.println("Total Pages: " + pageCount);
+		    System.out.println();
+
+		    int totalDisplayed = 0;
+
+		    for (int i = 0; i < pageCount; i++) {
+		        Pageable pageable = PageRequest.of(i, pageSize);
+		        Page<Employee> page = empRepo.findAll(pageable);
+
+		        totalDisplayed += page.getNumberOfElements();
+
+		        // print header line with cumulative count and page info
+		        System.out.println("=== Page " + (i + 1) + " of " + pageCount +
+		                " (" + totalDisplayed + "/" + (i + 1) + ") ===");
+
+		        page.forEach(System.out::println);
+		        System.out.println();
+		    }
+		}
+                                                                              
+
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

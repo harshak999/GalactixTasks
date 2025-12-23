@@ -10,5 +10,8 @@ public interface IEmployeeService {
 	public List<Employee> findAllEmpData(List<Integer> ids);
 	public String deleteElementByIdinBatch(List<Integer> ids);
 	public String registerOrUpdate(Employee emp);
+	
+	public List<Employee> showEmployeeByData(Employee data,boolean asOrder,String ...prop);
+	public void  showEmployeeBypagination(int pageSize);
 
 }
